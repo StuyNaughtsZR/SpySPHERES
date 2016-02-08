@@ -1,0 +1,173 @@
+//Shaumik Ashraf
+//Rob7_prototype 
+//strat z-pic
+
+/*
+does better with just api.setAttitudeTarget... :(
+*/
+
+//globals
+ZRState me, other;
+float temp1[3], temp2[3];
+float tempMatrix[3][3];
+float itemStatus[NUM_ITEMS];
+int state, i;
+int myZone, otherZone;
+
+//macros
+#define LIGHT_ZONE 1
+#define GREY_ZONE 0      
+#define GRAY_ZONE 0     
+#define DARK_ZONE -1
+
+#define ME_HAVE 0
+#define OTHER_HAVE 1
+#define NO_HAVE -1
+
+
+void init(){
+    
+	state = 0;
+    
+}
+
+void loop() {
+
+    float zpoint[] = { 0.0f, 1.0f, -0.575f };
+
+    startloop();
+
+    zpoint[1] = game.getLightGreyBoundary() * 2.5/2.0;
+
+    switch(state) {
+        case 0:
+            if(mySetPositionTarget(zpoint, .1, .05)) { 
+                state = 1; 
+            }
+            mathVecSubtract(temp1, other, zpoint, 3);
+            api.setAttitudeTarget(temp1);
+            //game.takePic();
+            break;
+        case 1:
+            api.setPositionTarget(zpoint);
+            if( mySetAttitudeTarget(other,0.25) && otherZone!=DARK_ZONE ) { 
+                game.takePic(); 
+            }
+            if(game.getMemoryFilled() == 1) {
+                state=2;
+            }
+            break;
+        case 2:
+            api.setPositionTarget(zpoint);
+            if( mySetAttitudeTarget((float*)EARTH, 0.25) && mathVecMagnitude(me+9,3)<0.05 ) {
+                game.uploadPics();
+            }
+            if( game.getMemoryFilled() == 0 ) {
+                state=1;
+            }
+            break;
+        default: 
+            DEBUG(("Error"));
+            break;
+    }
+    
+}
+
+
+void startloop(void) {  
+    /*copy this function to set globals at start of loop()*/
+
+    api.getMyZRState(me);
+    api.getOtherZRState(other);
+    myZone = game.posInArea(me);
+	otherZone = game.posInArea(other);
+    for(i=0; i<NUM_ITEMS; i++) {
+        itemStatus[i] = game.hasItem(i);
+    }
+}
+
+bool isFacingEarth(void) {
+    
+    return( acosf(mathVecInner((float*)EARTH,me+6,3)/(mathVecMagnitude((float*)EARTH,3)*(mathVecMagnitude(me+6,3)))) < 0.25 && mathVecMagnitude(me+9,3) < 0.05 );
+    
+}
+
+ //FIX!!!
+bool mySetPositionTarget(float *target, float max_dist, float max_speed) {
+    
+    const float max_acc = 0.008;  //retest
+    float time_allot = 5.5;
+    float disp[3];
+    float dist, speed=mathVecMagnitude(me+3,3);
+    
+    mathVecSubtract(disp, target, me, 3);
+    dist = mathVecNormalize(disp, 3);
+    
+    if( dist<max_dist && speed<max_speed ) {
+        api.setPositionTarget(target);
+        return( 1==1 );
+    }
+    
+    if( (dist<0.1) || 
+        ((0.5*max_acc*time_allot*time_allot+speed*time_allot)>=dist) ) {
+            
+        api.setPositionTarget(target);
+        return( 0==1 );
+    }
+    else {
+        for(i=0; i<3; i++) {
+            disp[i] *= (dist/2.0);
+        }
+        api.setVelocityTarget(disp);
+        return( 0==1 );
+    }
+    
+}
+
+bool mySetAttitudeTarget(float target[3], float tolerance) {
+	/* parameters:
+		target - point at which satelite will face
+		tolerance - tolerance angle, faces target if true angle difference less than tolerance
+	  return value:
+	  	true if facing target
+		false if not
+	  NOTE: does not check angular velocity in facing target check!!!
+	*/
+
+	float att[3], dir[3], attRate[3]; //my attitude, target direction, angulaur velocity
+	float thetha;                     //current angle difference between att and dir
+	float time_alloc = 4.5;           //adjust this to optimize
+	float alpha = 0.0;                //OPTIMIZABLE set alpha to acceleration per sec value...
+
+	//find and normalize vectors: att, dir
+	mathVecSubtract(dir, target, me, 3);
+	mathVecNormalize(dir, 3);
+	
+	memcpy(att, me+6, sizeof(float)*3);
+	mathVecNormalize(att, 3); 
+	
+	//get attRate as unit vector, adjust magnitude later
+	mathVecCross(attRate, dir, att);
+	mathVecNormalize(attRate, 3);
+	
+	//find thetha
+	thetha = acosf( mathVecInner(att, dir, 3) ); //magnitudes are 1, so no need to divide
+	
+	if( thetha < 0.1 || 
+		thetha < tolerance ||
+		0.5*alpha*time_alloc*time_alloc+mathVecMagnitude(me+9, 3)*time_alloc > thetha
+	  ) {
+		api.setAttitudeTarget(dir);
+	}
+	else {
+		//set magnitude of attRate
+		for(i=0; i<3; i++) {
+			attRate[i] *= ( thetha / 3.0 );  //OPTIMIZE HERE
+		}
+		api.setAttRateTarget(attRate);
+	}
+	
+
+	return( thetha < tolerance ? 1==1 : 1==0 );  //felt like using this operator for once
+
+} 

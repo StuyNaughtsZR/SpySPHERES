@@ -1,0 +1,36 @@
+BEGIN ANALYSIS:
+Function Used: api.setAttRateTarget
+Speed: 5.0 deg/s
+Tolerance: 1.5
+Reached desired speed in: 6 seconds
+[-0.1, 0.781, 1.741, 2.022, 2.382, 3.103]
+Average omega after reached tolerance level: 4.18410285714 deg/s
+
+
+BEGIN ANALYSIS:
+Function Used: api.setAttRateTarget
+Speed: 10.0 deg/s
+Tolerance: 1.5
+Reached desired speed in: 13 seconds
+[0.06, 1.701, 3.303, 4.904, 5.785, 6.465, 6.946, 7.626, 7.906, 8.427, 8.387, 8.467, 8.307]
+Average omega after reached tolerance level: 9.0985952381 deg/s
+
+
+BEGIN ANALYSIS:
+Function Used: api.setAttRateTarget
+Speed: 15.0 deg/s
+Tolerance: 1.5
+Reached desired speed in: 14 seconds
+[-0.14, 3.263, 5.384, 7.346, 8.787, 10.068, 10.869, 11.549, 12.15, 12.991, 13.311, 13.031, 13.431, 13.231]
+Average omega after reached tolerance level: 14.3059341317 deg/s
+
+
+BEGIN ANALYSIS:
+Function Used: api.setAttRateTarget
+Speed: 20.0 deg/s
+Tolerance: 1.5
+Reached desired speed in: 14 seconds
+[-0.14, 3.943, 6.986, 9.548, 11.669, 13.231, 14.392, 15.393, 16.353, 16.994, 17.754, 18.315, 18.235, 18.355]
+Average omega after reached tolerance level: 19.2155149701 deg/s
+
+
